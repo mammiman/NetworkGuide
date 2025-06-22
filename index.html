@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OSI Layers Network Troubleshooting Guide</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #273c75;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .problems-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .problem-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .problem-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #906bff, #4ecdc4, #45b7d1, #96ceb4, #feca57);
+            border-radius: 20px 20px 0 0;
+        }
+
+        .problem-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .layer-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .problem-title {
+            font-size: 1.5rem;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+
+        .problem-description {
+            color: #555;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .solution-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #f0f0f0;
+        }
+
+        .solution-title {
+            font-size: 1.2rem;
+            color: #27ae60;
+            margin-bottom: 15px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .solution-steps {
+            list-style: none;
+            counter-reset: step-counter;
+        }
+
+        .solution-steps li {
+            counter-increment: step-counter;
+            margin-bottom: 12px;
+            padding-left: 40px;
+            position: relative;
+            line-height: 1.5;
+        }
+
+        .solution-steps li::before {
+            content: counter(step-counter);
+            position: absolute;
+            left: 0;
+            top: 0;
+            background: linear-gradient(45deg, #27ae60, #2ecc71);
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .download-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+            text-decoration: none;
+            padding: 12px 20px;
+            border-radius: 25px;
+            margin-top: 15px;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .download-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+        }
+
+        .layer-legend {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            margin-top: 40px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .legend-title {
+            font-size: 1.8rem;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 700;
+        }
+
+        .legend-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .legend-item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+
+        .scroll-gallery {
+            display: flex;
+            overflow-x: auto;
+            gap: 10px;
+            padding: 10px;
+            scroll-behavior: smooth;
+        }
+
+        .scroll-gallery img {
+            height: 400px;
+            flex-shrink: 0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .scroll-gallery img:hover {
+            transform: scale(1.05);
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+        }
+
+        .l1 { background: #7551f6; }
+        .l2 { background: #4ecdc4; }
+        .l3 { background: #45b7d1; }
+        .l4 { background: #96ceb4; }
+        .l5 { background: #feca57; }
+        .l6 { background: #ff9ff3; }
+        .l7 { background: #54a0ff; }
+
+        /* Lightbox Styles */
+        .lightbox {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(5px);
+        }
+
+        .lightbox-content {
+            position: relative;
+            margin: auto;
+            display: block;
+            max-width: 90%;
+            max-height: 90%;
+            top: 50%;
+            transform: translateY(-50%);
+            animation: lightboxZoom 0.3s ease;
+        }
+
+        @keyframes lightboxZoom {
+            from { transform: translateY(-50%) scale(0); }
+            to { transform: translateY(-50%) scale(1); }
+        }
+
+        .lightbox-close {
+            position: absolute;
+            top: 20px;
+            right: 35px;
+            color: #fff;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 1001;
+            transition: color 0.3s ease;
+        }
+
+        .lightbox-close:hover {
+            color: #ff6b6b;
+        }
+
+        .lightbox-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #fff;
+            font-size: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            user-select: none;
+            padding: 16px;
+            transition: color 0.3s ease;
+        }
+
+        .lightbox-prev {
+            left: 20px;
+        }
+
+        .lightbox-next {
+            right: 20px;
+        }
+
+        .lightbox-nav:hover {
+            color: #3498db;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .problems-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .problem-card {
+                padding: 20px;
+            }
+
+            .lightbox-content {
+                max-width: 95%;
+                max-height: 85%;
+            }
+
+            .lightbox-close {
+                top: 10px;
+                right: 20px;
+                font-size: 30px;
+            }
+
+            .lightbox-nav {
+                font-size: 24px;
+                padding: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌐 OSI Layers Network Troubleshooting Guide</h1>
+            <p>A comprehensive guide to troubleshooting network issues layer by layer</p>
+        </div>
+
+        <div class="problems-grid">
+           <!-- Problem 1: Layer 1 - Physical (Enhanced) -->
+<div class="problem-card" data-layer="1">
+    <div class="layer-badge l1">L1 - Physical Layer</div>
+    <h3 class="problem-title">🔌 Cable Connection Problem</h3>
+    <p class="problem-description">
+        The Ethernet cable is damaged, improperly connected, or incompatible. The network interface card LEDs are off, no physical connection is established, and devices cannot see each other.
+    </p>
+    <div class="solution-section">
+        <h4 class="solution-title">🔧 Detailed Solution Steps</h4>
+        <ol class="solution-steps">
+            <li><strong>Physical Check:</strong> Is the cable firmly plugged in at both ends? The RJ45 connector may not be fully inserted. Unplug and replug the cable.</li>
+            <li><strong>LED Status Analysis:</strong> Check the LEDs on the network card:
+                <ul style="margin-top: 8px; padding-left: 20px;">
+                    <li>🟢 <strong>Link LED (Green):</strong> If on, physical connection exists</li>
+                    <li>🟠 <strong>Activity LED (Orange):</strong> If blinking, data traffic is present</li>
+                    <li>🔴 <strong>If off:</strong> Cable or port is faulty</li>
+                </ul>
+            </li>
+            <li><strong>Cable Test:</strong> Test with another working cable. Check if it meets Cat5e/Cat6 standards. Cables longer than 100 meters may cause signal loss.</li>
+            <li><strong>Port Change:</strong> Try a different port on the same switch/router. The port may be faulty. Test different ports on both sending and receiving devices.</li>
+            <li><strong>Cable Quality:</strong> Bending, crushing, or running the cable through sharp corners can break internal wires. Check for damaged sections along the cable.</li>
+            <li><strong>Duplex Settings:</strong> On older devices, manual full-duplex/half-duplex and speed (10/100/1000 Mbps) mismatches can occur. Enable auto-negotiation.</li>
+            <li><strong>Cross/Straight Cable:</strong> Older devices may require a crossover cable. Modern devices with Auto-MDIX handle this automatically.</li>
+            <li><strong>Final Test:</strong> Perform a ping test and verify network connectivity. Check with "ipconfig" if an IP address is assigned.</li>
+        </ol>
+        
+        <div style="background: #fff3cd; padding: 15px; border-radius: 10px; margin: 15px 0; border-left: 4px solid #ffc107;">
+            <h5 style="color: #856404; margin-bottom: 10px;">⚠️ Common Cable Issues:</h5>
+            <ul style="color: #856404; margin-left: 20px;">
+                <li><strong>RJ45 Connector Damage:</strong> Plastic clip broken, pins bent</li>
+                <li><strong>Internal Wire Break:</strong> Cable excessively bent or crushed</li>
+                <li><strong>Wrong Cable Type:</strong> Telephone cable (RJ11) used instead of Ethernet</li>
+                <li><strong>Length Problem:</strong> Distance over 100 meters</li>
+                <li><strong>Electromagnetic Interference:</strong> Interference near power cables</li>
+                <li><strong>Old Cable Standard:</strong> Cat3 cable does not support gigabit Ethernet</li>
+            </ul>
+        </div>
+
+        <div style="background: #d1ecf1; padding: 15px; border-radius: 10px; margin: 15px 0; border-left: 4px solid #17a2b8;">
+            <h5 style="color: #0c5460; margin-bottom: 10px;">💡 Cable Testing Tools:</h5>
+            <ul style="color: #0c5460; margin-left: 20px;">
+                <li><strong>Cable Tester:</strong> Cable continuity and pin-to-pin test</li>
+                <li><strong>Network Analyzer:</strong> Signal quality and speed test</li>
+                <li><strong>Multimeter:</strong> Electrical continuity check</li>
+                <li><strong>TDR (Time Domain Reflectometer):</strong> Cable length and damage location</li>
+            </ul>
+        </div>
+
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; margin: 15px 0;">
+            <h5 style="color: #2c3e50; margin-bottom: 10px;">📋 Diagnostic Commands:</h5>
+            <code style="display: block; background: #2c3e50; color: #ecf0f1; padding: 10px; border-radius: 5px; margin: 5px 0;">
+            # Windows<br>
+            ipconfig /all<br>
+            ping 192.168.1.1<br>
+            netsh interface show interface<br>
+            devmgmt.msc (Device Manager)<br><br>
+            # Linux<br>
+            ifconfig -a<br>
+            ethtool eth0<br>
+            dmesg | grep eth<br>
+            lshw -class network
+            </code>
+            <div class="scroll-gallery">
+                 <img src="C:\Users\Mammi\Desktop\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\birinciproblemgörsel\birinciproblem.png"  alt="kod" class="codeimg" style="max-width:500px"-->
+            <img src="C:\Users\Mammi\Desktop\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\birinciproblemgörsel\birinciproblem1.png" alt="Resim 2">
+            <img src="C:\Users\Mammi\Desktop\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\birinciproblemgörsel\birincipronblem2.png" alt="Resim 3">
+            <img src="C:\Users\Mammi\Desktop\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\birinciproblemgörsel\birinciproblem4.png" alt="Resim 4">
+   </div>
+        </div>
+
+         <a href="C:\Users\Mammi\Desktop\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\Problems\physical_layer.pkt" class="download-link" download>
+            📁 Download Detailed Cable Simulation
+        </a>
+    </div>
+</div>
+
+            <!-- Problem 2: Layer 2 - Data Link (Port Security Enhanced) -->
+<div class="problem-card" data-layer="2">
+    <div class="layer-badge l2">L2 - Data Link Layer</div>
+    <h3 class="problem-title">🔒 Switch Port Security Violation</h3>
+    <p class="problem-description">
+        Port-security is enabled on the switch port and the allowed number of MAC addresses has been exceeded. The port has entered shutdown state, new devices cannot connect, and existing connections are lost. Due to a security violation, the port is in "err-disabled" state.
+    </p>
+    <div class="solution-section">
+        <h4 class="solution-title">🔧 Detailed Solution Steps</h4>
+        <ol class="solution-steps">
+            <li><strong>Check Port Security Status:</strong> Connect to the switch and identify ports with security violations:
+                <code style="display: block; background: #2c3e50; color: #ecf0f1; padding: 8px; border-radius: 5px; margin: 8px 0;">
+                    Switch# show port-security<br>
+                    Switch# show port-security interface fa0/1<br>
+                    Switch# show interfaces status err-disabled
+                </code>
+            </li>
+            <li><strong>Violation Details:</strong> Find out which MAC address caused the violation and the violation type:
+                <code style="display: block; background: #2c3e50; color: #ecf0f1; padding: 8px; border-radius: 5px; margin: 8px 0;">
+                    Switch# show port-security address<br>
+                    Switch# show mac address-table interface fa0/1<br>
+                    Switch# show logging | include PSECURE
+                </code>
+            </li>
+            <li><strong>Review Security Settings:</strong> Analyze the current port-security configuration:
+                <ul style="margin-top: 8px; padding-left: 20px;">
+                    <li><strong>Maximum MAC Count:</strong> How many MAC addresses are allowed?</li>
+                    <li><strong>Violation Action:</strong> Shutdown, restrict, or protect?</li>
+                    <li><strong>Aging Time:</strong> How long are MAC addresses retained?</li>
+                    <li><strong>Sticky Learning:</strong> Are MACs learned automatically?</li>
+                </ul>
+            </li>
+            <li><strong>Re-enable the Port:</strong> Manually bring up the err-disabled port:
+                <code style="display: block; background: #2c3e50; color: #ecf0f1; padding: 8px; border-radius: 5px; margin: 8px 0;">
+                    Switch(config)# interface fa0/1<br>
+                    Switch(config-if)# shutdown<br>
+                    Switch(config-if)# no shutdown<br>
+                    Switch(config-if)# exit
+                </code>
+            </li>
+            <li><strong>Clear MAC Address Table:</strong> Remove old/incorrect MAC entries:
+                <code style="display: block; background: #2c3e50; color: #ecf0f1; padding: 8px; border-radius: 5px; margin: 8px 0;">
+                    Switch# clear mac address-table dynamic interface fa0/1<br>
+                    Switch# clear port-security dynamic interface fa0/1<br>
+                    Switch# clear port-security sticky interface fa0/1
+                </code>
+            </li>
+            <li><strong>Reconfigure Port Security:</strong> Optimize settings if necessary:
+                <code style="display: block; background: #2c3e50; color: #ecf0f1; padding: 8px; border-radius: 5px; margin: 8px 0;">
+                    Switch(config)# interface fa0/1<br>
+                    Switch(config-if)# switchport port-security maximum 3<br>
+                    Switch(config-if)# switchport port-security violation restrict<br>
+                    Switch(config-if)# switchport port-security aging time 60<br>
+                    Switch(config-if)# switchport port-security mac-address sticky
+                </code>
+            </li>
+            <li><strong>Enable Automatic Recovery:</strong> Set up automatic recovery for future violations:
+                <code style="display: block; background: #2c3e50; color: #ecf0f1; padding: 8px; border-radius: 5px; margin: 8px 0;">
+                    Switch(config)# errdisable recovery cause psecure-violation<br>
+                    Switch(config)# errdisable recovery interval 300
+                </code>
+            </li>
+            <li><strong>Test and Monitor:</strong> Verify port status and security status:
+                <code style="display: block; background: #2c3e50; color: #ecf0f1; padding: 8px; border-radius: 5px; margin: 8px 0;">
+                    Switch# show interfaces fa0/1 status<br>
+                    Switch# show port-security interface fa0/1<br>
+                    Switch# ping [test-device-ip]
+                </code>
+            </li>
+        </ol>
+        
+        <div style="background: #fff3cd; padding: 15px; border-radius: 10px; margin: 15px 0; border-left: 4px solid #ffc107;">
+            <h5 style="color: #856404; margin-bottom: 10px;">⚠️ Port Security Violation Types:</h5>
+            <ul style="color: #856404; margin-left: 20px;">
+                <li><strong>Shutdown:</strong> Port is completely disabled (err-disabled), manual intervention required</li>
+                <li><strong>Restrict:</strong> Violating packets are dropped, port stays up, logs are kept</li>
+                <li><strong>Protect:</strong> Violating packets are dropped, port stays up, no logs</li>
+            </ul>
+        </div>
+
+         <div class="scroll-gallery">
+            <img src="C:\Users\Mammi\Desktop\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\ikinciproblem\problem2.png"  alt="code" class="codeimg" style="max-width:600px"-->
+            <img src="C:\Users\Mammi\Desktop\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\ikinciproblem\problem2-1.png"  alt="code" class="codeimg" style="max-width:500px"-->
+            <img src="C:\Users\Mammi\Desktop\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\ikinciproblem\problem2-2.png" alt="Image 2">
+            <img src="C:\Users\Mammi\Desktop\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\ikinciproblem\problem2-3.png" alt="Image 3">
+            <img src="C:\Users\Mammi\Desktop\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\ikinciproblem\problem2-4.png" alt="Image 4">
+     
+    </div>
+
+       
+        <a href="C:\Users\Mammi\Desktop\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\Problems\switchport.pkt" class="download-link" download>
+            📁 Download Detailed Port Security Simulation
+        </a>
+    </div>
+</div>
+
+           <!-- Problem 3: Layer 3 - Network (IP Assignment Enhanced) -->
+    <div class="problem-card" data-layer="3">
+        <div class="layer-badge l3">L3 - Network Layer</div>
+        <h3 class="problem-title">🌐 Incorrect IP Address Assignment</h3>
+        <p class="problem-description">
+        An incorrect IP address has been manually assigned to the device. While the network is 192.168.1.0/24, the device IP is set as 192.168.2.15. Ping tests fail and there is no network access.
+        </p>
+        <div class="solution-section">
+        <h4 class="solution-title">🔧 Solution Steps</h4>
+        <ol class="solution-steps">
+            <li><strong>Check Current IP:</strong> Check the device's IP settings
+            <code style="display: block; background: #2c3e50; color: #ecf0f1; padding: 8px; border-radius: 5px; margin: 8px 0;">
+                # Windows: ipconfig /all<br>
+                # Linux: ifconfig or ip addr show
+            </code>
+            </li>
+            <li><strong>Network Block Detection:</strong> Learn the Router/Gateway IP and determine the correct network segment</li>
+            <li><strong>IP Correction:</strong> Select an appropriate IP from the correct IP block (192.168.1.x) and set the subnet mask (255.255.255.0)</li>
+            <li><strong>Gateway Setting:</strong> Configure the default gateway with the correct IP (usually 192.168.1.1)</li>
+            <li><strong>DNS Configuration:</strong> Add DNS server addresses (router IP or 8.8.8.8)</li>
+            <li><strong>Alternative - DHCP:</strong> Use DHCP to automatically obtain an IP instead of manual IP</li>
+            <li><strong>Test:</strong> Verify the connection with Ping
+            <code style="display: block; background: #2c3e50; color: #ecf0f1; padding: 8px; border-radius: 5px; margin: 8px 0;">
+                ping 192.168.1.1 (gateway)<br>
+                ping 8.8.8.8 (internet)
+            </code>
+            </li>
+        </ol>
+        
+        <div class="scroll-gallery">
+            <img src="C:\Users\Mammi\Desktop\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\üçüncüproblemgörsel\problem3-1.png"  alt="kod" class="codeimg" style="max-width:500px"-->
+            <img src="C:\Users\Mammi\Desktop\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\üçüncüproblemgörsel\problem3-2.png"  alt="kod" class="codeimg" style="max-width:500px"-->
+            <img src="C:\Users\Mammi\Desktop\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\üçüncüproblemgörsel\problem3-3.png" alt="Resim 2">
+          
+</div>
+        <a href="C:\Users\Mammi\Desktop\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\Problems\network_layer.pkt" class="download-link" download>
+            📁 Download IP Assignment Simulation
+        </a>
+    </div>
+</div>
+
+           <!-- Problem 4: Layer 3 - Network (Routing Table Enhanced) -->
+<div class="problem-card" data-layer="3">
+    <div class="layer-badge l3">L3 - Network Layer</div>
+    <h3 class="problem-title">🗺️ Routing Table Error</h3>
+    <p class="problem-description">
+        An incorrect static route is defined on the router. Packets cannot reach the destination network and a "Destination Unreachable" error is received. There are missing or incorrect routes in the routing table.
+    </p>
+    <div class="solution-section">
+        <h4 class="solution-title">🔧 Solution Steps</h4>
+        <ol class="solution-steps">
+            <li><strong>Check Routing Table:</strong> Review the current routing table
+                <code style="display: block; background: #2c3e50; color: #ecf0f1; padding: 8px; border-radius: 5px; margin: 8px 0;">
+                    Router# show ip route<br>
+                    Router# show ip route static
+                </code>
+            </li>
+            <li><strong>Identify Incorrect Route:</strong> Find routes pointing to the wrong next-hop or interface
+                <code style="display: block; background: #2c3e50; color: #ecf0f1; padding: 8px; border-radius: 5px; margin: 8px 0;">
+                    Router# show ip route 192.168.10.0<br>
+                    Router# traceroute 192.168.10.5
+                </code>
+            </li>
+            <li><strong>Remove Incorrect Route:</strong> Delete the incorrect static route
+                <code style="display: block; background: #2c3e50; color: #ecf0f1; padding: 8px; border-radius: 5px; margin: 8px 0;">
+                    Router(config)# no ip route 192.168.10.0 255.255.255.0 192.168.2.1
+                </code>
+            </li>
+            <li><strong>Add Correct Route:</strong> Define a new route with the correct next-hop
+                <code style="display: block; background: #2c3e50; color: #ecf0f1; padding: 8px; border-radius: 5px; margin: 8px 0;">
+                    Router(config)# ip route 192.168.10.0 255.255.255.0 192.168.1.2
+                </code>
+            </li>
+            <li><strong>Check Default Route:</strong> Verify the correctness of the 0.0.0.0/0 route</li>
+            <li><strong>Interface Status:</strong> Ensure next-hop interfaces are up/up
+                <code style="display: block; background: #2c3e50; color: #ecf0f1; padding: 8px; border-radius: 5px; margin: 8px 0;">
+                    Router# show ip interface brief
+                </code>
+            </li>
+            <li><strong>Ping Test:</strong> Test access to the target network
+                <code style="display: block; background: #2c3e50; color: #ecf0f1; padding: 8px; border-radius: 5px; margin: 8px 0;">
+                    Router# ping 192.168.10.5<br>
+                    Router# traceroute 192.168.10.5
+                </code>
+            </li>
+        </ol>
+        
+       <div class="scroll-gallery">
+            <img src="C:\Users\Mammi\Desktop\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\dördüncüproblemgörsel\problem4-0.png"  alt="code" class="codeimg" style="max-width:500px"-->
+            <img src="C:\Users\Mammi\Desktop\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\dördüncüproblemgörsel\problem4-1.png"  alt="code" class="codeimg" style="max-width:500px"-->
+            <img src="C:\Users\Mammi\Desktop\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\dördüncüproblemgörsel\problem4-2.png" alt="Image 2">
+            <img src="C:\Users\Mammi\Desktop\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\dördüncüproblemgörsel\problem4-3.png" alt="Image 3">          
+</div>
+        <a href="C:\Users\Mammi\Desktop\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\Problems\destination_unreachable.pkt" class="download-link" download>
+            📁 Download Routing Simulation
+        </a>
+    </div>
+</div>
+
+            <!-- Problem 5: Layer 3 - Network (Routing Protocol Issues) -->
+            <div class="problem-card" data-layer="3">
+                <div class="layer-badge l3">L3 - Network Layer</div>
+                <h3 class="problem-title">Routing Protocol Issues</h3>
+                <p class="problem-description">
+                    Problems with OSPF, EIGRP, or RIP protocols such as neighbor adjacency issues, metric calculation errors, and routing loops. Network convergence does not occur.
+                </p>
+                <div class="solution-section">
+                    <h4 class="solution-title">🔧 Solution Steps</h4>
+                    <ol class="solution-steps">
+                        <li><strong>Protocol Status:</strong> Check routing protocol status with "show ip protocols"</li>
+                        <li><strong>Neighbor Detection:</strong> Run "show ip ospf neighbor" or "show ip eigrp neighbors"</li>
+                        <li><strong>Interface Check:</strong> Review interface statuses with "show ip interface brief"</li>
+                        <li><strong>Authentication:</strong> Verify authentication settings between routers</li>
+                        <li><strong>Network Statements:</strong> Ensure correct network ranges are defined</li>
+                        <li><strong>Metric Settings:</strong> Optimize bandwidth and delay values</li>
+                        <li><strong>Loop Prevention:</strong> Check split horizon and route poisoning settings</li>
+                        <li><strong>Convergence Test:</strong> Use "clear ip route *" to refresh the routing table and test convergence</li>
+                    </ol>
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; margin: 15px 0;">
+                        <h5 style="color: #2c3e50; margin-bottom: 10px;">📋 Diagnostic Commands:</h5>
+                        <code style="display: block; background: #2c3e50; color: #ecf0f1; padding: 10px; border-radius: 5px; margin: 5px 0;">
+                            show ip route<br>
+                            show ip ospf database<br>
+                            show ip eigrp topology<br>
+                            debug ip routing<br>
+                            traceroute [destination]
+                        </code>
+                    </div>
+                  <div class="scroll-gallery">
+            <img src="C:\Users\Mammi\Desktop\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\beşinciproblem\l3-routing-protocol-misconfiguration-ss1.png"  alt="code" class="codeimg" style="max-width:500px"-->
+            <img src="C:\Users\Mammi\Desktop\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\beşinciproblem\l3-routing-protocol-misconfiguration-ss2.png"  alt="code" class="codeimg" style="max-width:500px"-->
+            <img src="C:\Users\Mammi\Desktop\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\beşinciproblem\l3-routing-protocol-misconfiguration-ss3.png" alt="Image 2">
+            <img src="C:\Users\Mammi\Desktop\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\beşinciproblem\l3-routing-protocol-misconfiguration-ss5.png" alt="Image 3">          
+</div>
+                    <a href="C:\Users\Mammi\Desktop\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\Problems\l3-routing-protocol-misconfiguration.pkt" class="download-link" download>
+                        📁 Download Simulation
+                    </a>
+                </div>
+            </div>
+
+            <!-- Problem 6: Layer 5 - Session (Timeout Enhanced) -->
+<div class="problem-card" data-layer="5">
+    <div class="layer-badge l5">L5 - Session Layer</div>
+    <h3 class="problem-title">⏱️ Session Timeout</h3>
+    <p class="problem-description">
+        Remote desktop connection, SSH session, or web sessions are constantly disconnecting. Session timeout values are set too low and the connection is automatically terminated when the user is idle.
+    </p>
+    <div class="solution-section">
+        <h4 class="solution-title">🔧 Solution Steps</h4>
+        <ol class="solution-steps">
+            <li><strong>Check Current Timeout:</strong> Review session timeout settings</li>
+            <li><strong>Increase SSH Timeout:</strong> Extend timeout for console and VTY lines</li>
+            <li><strong>Enable Keep-Alive:</strong> Activate mechanisms to keep the connection alive</li>
+            <li><strong>Web Session Timeout:</strong> Adjust HTTP server session durations</li>
+            <li><strong>Firewall/NAT Timeout:</strong> Check session aging times on the firewall</li>
+            <li><strong>Client Settings:</strong> Optimize connection settings on the RDP client</li>
+            <li><strong>Test:</strong> Leave idle for a long time and test the timeout</li>
+        </ol>
+        
+        <div class="scroll-gallery">
+            <img src="C:\Users\Mammi\Desktop\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\altıncıproblemgörsel\problem6.png"  alt="code" class="codeimg" style="max-width:500px"-->
+            <img src="C:\Users\Mammi\Desktop\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\altıncıproblemgörsel\problem6-1.png"  alt="code" class="codeimg" style="max-width:500px"-->
+      </div>
+        <a href="C:\Users\Mammi\Desktop\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\Problems\timeout.pkt" class="download-link" download>
+            📁 Download Session Timeout Simulation
+        </a>
+    </div>
+</div>
+
+                 <div class="problem-card" data-layer="5">
+                <div class="layer-badge l5">L5 - Session Layer</div>
+                <h3 class="problem-title">Connection State Issues</h3>
+                <p class="problem-description">
+                    Sessions are not being established or maintained properly. Potential causes include connection tracking issues, state table overflow, asymmetric routing, and firewall state inconsistencies.
+                </p>
+                <div class="solution-section">
+                    <h4 class="solution-title">🔧 Solution Steps</h4>
+                    <ol class="solution-steps">
+                        <li>Check the connection state table (e.g., `show ip nat translations`, `show ip inspect sessions`).</li>
+                        <li>Verify firewall connection tracking.</li>
+                        <li>Adjust connection limits if necessary (e.g., `ip nat translation max-entries [num]`, `ip inspect max-incomplete high [num]`).</li>
+                        <li>Ensure consistent routing paths.</li>
+                        <li>Monitor connection establishment and teardown.</li>
+                    </ol>
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; margin: 15px 0;">
+                        <h5 style="color: #2c3e50; margin-bottom: 10px;">📋 Diagnostic Commands:</h5>
+                        <code style="display: block; background: #2c3e50; color: #ecf0f1; padding: 10px; border-radius: 5px; margin: 5px 0;">
+                            Router> show ip nat translations<br>
+                            Router> show ip inspect sessions<br>
+                            Router(config)# ip nat translation max-entries 10000<br>
+                            Router(config)# ip inspect max-incomplete high 400
+                        </code>
+                        <div class="scroll-gallery">
+            <img src="C:\Users\Mammi\Desktop\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\yedinciproblem\problem7.png"  alt="code" class="codeimg" style="max-width:500px"-->
+            <img src="C:\Users\Mammi\Desktop\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\yedinciproblem\problem7-1.png"  alt="code" class="codeimg" style="max-width:500px"-->
+            <img src="C:\Users\Mammi\Desktop\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\yedinciproblem\problem7-2.png"  alt="code" class="codeimg" style="max-width:500px"-->    
+        </div>
+                    </div>
+                    <a href="C:\Users\Mammi\Desktop\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\Problems\connection_state.pkt" class="download-link" download>
+                        📁 Download Simulation
+                    </a>
+                </div>
+            </div>
+
+           <!-- Problem 8: Layer 7 - Application -->
+            <div class="problem-card" data-layer="7">
+                <div class="layer-badge l7">L7 - Application Layer</div>
+                <h3 class="problem-title">DNS Resolution Error</h3>
+                <p class="problem-description">
+                    Website names cannot be resolved, but access is possible via IP addresses. DNS server settings are incorrect, DNS server is unreachable, or DNS records are missing/incorrect. Users receive "Server not found" or "DNS resolution failed" errors.
+                </p>
+                <div class="solution-section">
+                    <h4 class="solution-title">🔧 Detailed Solution Steps</h4>
+                    <ol class="solution-steps">
+                        <li><strong>DNS Server Status:</strong> Test accessibility of primary and secondary DNS servers with ping</li>
+                        <li><strong>Client DNS Settings:</strong> Check DNS settings with `ipconfig /all` (Windows) or `cat /etc/resolv.conf` (Linux)</li>
+                        <li><strong>DNS Query Test:</strong> Perform manual DNS queries with `nslookup google.com` and `dig google.com`</li>
+                        <li><strong>DNS Cache Cleanup:</strong> Clear cache with `ipconfig /flushdns` (Windows) or `sudo systemctl restart systemd-resolved` (Linux)</li>
+                        <li><strong>Alternative DNS:</strong> Test using Google DNS (8.8.8.8, 8.8.4.4) or Cloudflare DNS (1.1.1.1, 1.0.0.1)</li>
+                        <li><strong>Router DNS Forwarding:</strong> Check DNS forwarding settings and upstream DNS servers on the router</li>
+                        <li><strong>Firewall Check:</strong> Verify if port 53 (UDP/TCP) traffic is blocked</li>
+                        <li><strong>DNS Server Configuration:</strong> If using an internal DNS server, check zone files and records</li>
+                    </ol>
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; margin: 15px 0;">
+                        <h5 style="color: #2c3e50; margin-bottom: 10px;">📋 Diagnostic Commands:</h5>
+                        <code style="display: block; background: #2c3e50; color: #ecf0f1; padding: 10px; border-radius: 5px; margin: 5px 0;">
+                            # Windows<br>
+                            nslookup google.com<br>
+                            ipconfig /all<br>
+                            ipconfig /flushdns<br>
+                            netsh int ip show dns<br><br>
+                            # Linux<br>
+                            dig google.com<br>
+                            cat /etc/resolv.conf<br>
+                            systemd-resolve --status<br>
+                            ping 8.8.8.8
+                        </code>
+                    </div>
+                     <div class="scroll-gallery">
+            <img src="C:\Users\Mammi\Desktop\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\210315046_MuhammetVeli_Yılmaz_Network_FDP_130625\sekizinciproblem\764db7d6ac4f4025333967d96951776ad22ffd63.png"  alt="kod" class="codeimg" style="max-width:500px"-->
+            </div>
+                </div>
+            </div>
+
+           <!-- Problem 9: Layer 2 - Data Link (VLAN Enhanced) -->
+<div class="problem-card" data-layer="2">
+    <div class="layer-badge l2">L2 - Data Link Layer</div>
+    <h3 class="problem-title">🏷️ VLAN Configuration Error</h3>
+    <p class="problem-description">
+        Devices in different VLANs cannot communicate with each other. Trunk port configuration is incorrect, VLANs are not created, or inter-VLAN routing is not set up. There is no connectivity even within the same VLAN.
+    </p>
+    <div class="solution-section">
+        <h4 class="solution-title">🔧 Solution Steps</h4>
+        <ol class="solution-steps">
+            <li><strong>Check VLAN Status:</strong> Check existing VLANs and port assignments</li>
+            <li><strong>Create VLANs:</strong> Define missing VLANs</li>
+            <li><strong>Access Port Configuration:</strong> Assign ports to the correct VLAN</li>
+            <li><strong>Trunk Port Setup:</strong> Configure trunk between switches</li>
+            <li><strong>Inter-VLAN Routing:</strong> Set up routing with router-on-a-stick or Layer 3 switch</li>
+            <li><strong>Native VLAN Check:</strong> Verify native VLAN compatibility on trunk ports</li>
+            <li><strong>Test:</strong> Perform ping tests within and between VLANs</li>
+        </ol>
+    </div>
+</div>
+
+<div class="problem-card" data-layer="3">
+    <div class="layer-badge l3">L3 - Network Layer</div>
+    <h3 class="problem-title">📡 DHCP Server Error</h3>
+    <p class="problem-description">
+        New devices cannot connect to the network and do not receive an IP address. The DHCP server IP pool is exhausted, the service is stopped, or DHCP relay settings are incorrect. Clients work with manual IP but cannot get an automatic IP.
+    </p>
+    <div class="solution-section">
+        <h4 class="solution-title">🔧 Solution Steps</h4>
+        <ol class="solution-steps">
+            <li><strong>DHCP Server Status:</strong> Check if the service is running</li>
+            <li><strong>IP Pool Capacity:</strong> Check available IP addresses</li>
+            <li><strong>Enable DHCP Service:</strong> Make sure the service is active</li>
+            <li><strong>Reconfigure Pool:</strong> Expand or redefine the IP pool</li>
+            <li><strong>Excluded Addresses:</strong> Exclude IPs that need to be reserved</li>
+            <li><strong>DHCP Relay:</strong> Set helper-address for clients in different subnets</li>
+            <li><strong>Client Test:</strong> Renew DHCP on the client</li>
+        </ol>
+    </div>
+</div>
+        </div>
+    </div>
+
+    <!-- Lightbox Modal -->
+    <div id="lightbox" class="lightbox">
+        <span class="lightbox-close">&times;</span>
+        <span class="lightbox-nav lightbox-prev">&#10094;</span>
+        <img class="lightbox-content" id="lightbox-img" alt="">
+        <span class="lightbox-nav lightbox-next">&#10095;</span>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Lightbox functionality
+            const lightbox = document.getElementById('lightbox');
+            const lightboxImg = document.getElementById('lightbox-img');
+            const closeBtn = document.querySelector('.lightbox-close');
+            const prevBtn = document.querySelector('.lightbox-prev');
+            const nextBtn = document.querySelector('.lightbox-next');
+            
+            let currentImages = [];
+            let currentIndex = 0;
+
+            // Get all images in scroll galleries
+            const galleryImages = document.querySelectorAll('.scroll-gallery img');
+            
+            galleryImages.forEach((img, index) => {
+                img.addEventListener('click', function() {
+                    // Get all images in the same gallery
+                    const gallery = this.closest('.scroll-gallery');
+                    currentImages = Array.from(gallery.querySelectorAll('img'));
+                    currentIndex = currentImages.indexOf(this);
+                    
+                    openLightbox(this.src, this.alt);
+                });
+            });
+
+            function openLightbox(src, alt) {
+                lightbox.style.display = 'block';
+                lightboxImg.src = src;
+                lightboxImg.alt = alt;
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closeLightbox() {
+                lightbox.style.display = 'none';
+                document.body.style.overflow = 'auto';
+            }
+
+            function showPrevImage() {
+                if (currentImages.length > 1) {
+                    currentIndex = (currentIndex - 1 + currentImages.length) % currentImages.length;
+                    lightboxImg.src = currentImages[currentIndex].src;
+                    lightboxImg.alt = currentImages[currentIndex].alt;
+                }
+            }
+
+            function showNextImage() {
+                if (currentImages.length > 1) {
+                    currentIndex = (currentIndex + 1) % currentImages.length;
+                    lightboxImg.src = currentImages[currentIndex].src;
+                    lightboxImg.alt = currentImages[currentIndex].alt;
+                }
+            }
+
+            // Event listeners
+            closeBtn.addEventListener('click', closeLightbox);
+            prevBtn.addEventListener('click', showPrevImage);
+            nextBtn.addEventListener('click', showNextImage);
+
+            // Close lightbox when clicking outside the image
+            lightbox.addEventListener('click', function(e) {
+                if (e.target === lightbox) {
+                    closeLightbox();
+                }
+            });
+
+            // Keyboard navigation
+            document.addEventListener('keydown', function(e) {
+                if (lightbox.style.display === 'block') {
+                    switch(e.key) {
+                        case 'Escape':
+                            closeLightbox();
+                            break;
+                        case 'ArrowLeft':
+                            showPrevImage();
+                            break;
+                        case 'ArrowRight':
+                            showNextImage();
+                            break;
+                    }
+                }
+            });
+
+            // Hide navigation buttons if only one image
+            lightboxImg.addEventListener('load', function() {
+                if (currentImages.length <= 1) {
+                    prevBtn.style.display = 'none';
+                    nextBtn.style.display = 'none';
+                } else {
+                    prevBtn.style.display = 'block';
+                    nextBtn.style.display = 'block';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
